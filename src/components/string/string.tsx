@@ -6,27 +6,15 @@ import style from "./string.module.css";
 import { useForm } from "../../hooks/useForm";
 import { Circle } from "../ui/circle/circle";
 import { ElementStates } from "../../types/element-states";
+import { addTimeOut, swap } from "../../tools/tools";
 export const StringComponent: React.FC = () => {
   const { values, handleChange, setValues } = useForm({input: ''})
   const [flag, setFlag] = useState(false)
   const [output, setOutput] = useState<{letter: string, state: ElementStates}[]>()
 
-  //Функция промежутка между перебором елементов
 
-  const addTimeOut = (ms: number) => {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
 
- //Функция перемещения элемента с индексом i с элементом с индексом j
-
-  const swap = (arr: {letter: string, state: ElementStates}[], i: number, j: number) => {
-    const temp = arr[i];
-    arr[i] = arr[j];
-    arr[j] = temp;
-    return arr
-  }
-
-//Функция переворота масиива букв
+//Функция переворота масcива букв
 
   const reverse = async(value: string[]) => {
     //флаг объявляет начало функции
