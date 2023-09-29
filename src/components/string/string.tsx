@@ -1,10 +1,78 @@
-import React from "react";
+import React, { FormEventHandler, useState } from "react";
 import { SolutionLayout } from "../ui/solution-layout/solution-layout";
-
+import { Input } from "../ui/input/input";
+import { Button } from "../ui/button/button";
+import style from "./string.module.css";
+import { useForm } from "../../hooks/useForm";
+import { Circle } from "../ui/circle/circle";
+import { ElementStates } from "../../types/element-states";
 export const StringComponent: React.FC = () => {
+  const { values, handleChange, setValues } = useForm({input: ''})
+  const [flag, setFlag] = useState(false)
+  const [output, setOutput] = useState<{letter: string, state: ElementStates}[]>()
+
+  //Функция промежутка между перебором елементов
+
+  const addTimeOut = (ms: number) => {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+ //Функция перемещения элемента с индексом i с элементом с индексом j
+
+  const swap = (arr: {letter: string, state: ElementStates}[], i: number, j: number) => {
+    const temp = arr[i];
+    arr[i] = arr[j];
+    arr[j] = temp;
+    return arr
+  }
+
+//Функция переворота масиива букв
+
+  const reverse = async(value: string[]) => {
+    //флаг объявляет начало функции
+    setFlag(true)
+    let modifiedArray: {letter: string, state: ElementStates}[] = []
+    const len = value.length%2===0 ? Math.floor(value.length/2) : Math.floor(value.length/2+1)
+    //данный массив модифицируем, добовляя каждой букве цвет
+    for (let i=0; i < value.length; i++){
+      modifiedArray[i] = {
+        letter: value[i],
+        state: ElementStates.Default
+      } 
+    }
+    setOutput(modifiedArray)
+    for (let i=0; i < len; i++){
+      //меняем цвет переворачиваемых букв
+      modifiedArray[i].state = ElementStates.Changing
+      modifiedArray[value.length-1-i].state = ElementStates.Changing
+      await addTimeOut(1000)
+      setOutput([...modifiedArray])
+      await addTimeOut(1000)
+      //переворачиваем и меняем цвет уже перевернутым буквам
+      modifiedArray = swap(modifiedArray,i,value.length-1-i)
+      modifiedArray[i].state = ElementStates.Modified
+      modifiedArray[value.length-1-i].state = ElementStates.Modified 
+      setOutput([...modifiedArray])
+    }
+    //возвращаем все сонстанты и флаги в исходное положение 
+    setFlag(false)
+    modifiedArray = []
+    setValues({input: ''})
+  }
+  const submit: FormEventHandler = (e) => {
+    e.preventDefault();
+    reverse(values.input.split(''))
+  };
+
   return (
     <SolutionLayout title="Строка">
-     
+      <form className={style.box} onSubmit={submit}>
+        <Input max={11} maxLength={20} isLimitText={values.input.length > 11 ? true : false} name="input" type={typeof values.input} value={values.input} onChange={handleChange}/>
+        <Button isLoader={flag} text="Развернуть" type="submit" disabled={values.input.length < 2 ? true : false}/>
+      </form>
+      <div className={style.circles}>
+        {output && output?.map((el: {letter: string, state: ElementStates}, i: number) => {return <Circle letter={el.letter} extraClass={style.margin} key={i} state={el.state}/>})}
+      </div>
     </SolutionLayout>
-  );
+    );
 };
