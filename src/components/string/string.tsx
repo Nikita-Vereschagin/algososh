@@ -7,10 +7,11 @@ import { useForm } from "../../hooks/useForm";
 import { Circle } from "../ui/circle/circle";
 import { ElementStates } from "../../types/element-states";
 import { addTimeOut, swap } from "../../tools/tools";
+import { TSwap } from "../../types/types";
 export const StringComponent: React.FC = () => {
   const { values, handleChange, setValues } = useForm({input: ''})
   const [flag, setFlag] = useState(false)
-  const [output, setOutput] = useState<{letter: string, state: ElementStates}[]>()
+  const [output, setOutput] = useState<TSwap[]>()
 
 
 
@@ -19,11 +20,12 @@ export const StringComponent: React.FC = () => {
   const reverse = async(value: string[]) => {
     //флаг объявляет начало функции
     setFlag(true)
-    let modifiedArray: {letter: string, state: ElementStates}[] = []
+    let modifiedArray: TSwap[] = []
     const len = value.length%2===0 ? Math.floor(value.length/2) : Math.floor(value.length/2+1)
     //данный массив модифицируем, добовляя каждой букве цвет
     for (let i=0; i < value.length; i++){
       modifiedArray[i] = {
+        number: i,
         letter: value[i],
         state: ElementStates.Default
       } 
@@ -59,7 +61,7 @@ export const StringComponent: React.FC = () => {
         <Button isLoader={flag} text="Развернуть" type="submit" disabled={values.input.length < 2 ? true : false}/>
       </form>
       <div className={style.circles}>
-        {output && output?.map((el: {letter: string, state: ElementStates}, i: number) => {return <Circle letter={el.letter} extraClass={style.margin} key={i} state={el.state}/>})}
+        {output && output?.map((el: TSwap, i: number) => {return <Circle letter={el.letter} extraClass={style.margin} key={i} state={el.state}/>})}
       </div>
     </SolutionLayout>
     );
