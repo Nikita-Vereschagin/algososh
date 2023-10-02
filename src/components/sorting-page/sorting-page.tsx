@@ -55,8 +55,6 @@ export const SortingPage: React.FC = () => {
             modifiedArray[j].state = ElementStates.Changing 
             setOutput([...modifiedArray])
             await addTimeOut(250)
-            modifiedArray[j+1].state = ElementStates.Default
-            modifiedArray[j].state = ElementStates.Default
             swap(modifiedArray,j,j+1)
             setOutput([...modifiedArray])
           }
@@ -64,32 +62,88 @@ export const SortingPage: React.FC = () => {
           if (modifiedArray[j].number < modifiedArray[j + 1].number) {
             await addTimeOut(250)
             modifiedArray[j+1].state = ElementStates.Changing
-            modifiedArray[j].state = ElementStates.Changing
+            modifiedArray[j].state = ElementStates.Changing 
             setOutput([...modifiedArray])
             await addTimeOut(250)
-            modifiedArray[j+1].state = ElementStates.Default
-            modifiedArray[j].state = ElementStates.Default
             swap(modifiedArray,j,j+1)
             setOutput([...modifiedArray])
           }
         }
-        
+        modifiedArray[modifiedArray.length - 1 - i].state = ElementStates.Modified
+        setOutput([...modifiedArray])
+        await addTimeOut(500)
       }
     }
     setFlag(false)
     modifiedArray = []
   }
+
+  const selectSort = async(arr: TSwap[] | undefined, type: string) => { 
+    if (arr === undefined){
+      return
+    }
+    setFlag(true)
+    
+    let modifiedArray: TSwap[] = arr
+      for(let i = 0; i < modifiedArray.length; i++) {
+        let min = i;
+        await addTimeOut(250)
+        for(let j = i+1; j < modifiedArray.length; j++){
+          if (type === 'max'){
+            if(modifiedArray[j].number > modifiedArray[min].number) {
+              min=j; 
+            }
+          } else if (type === 'min'){
+            if(modifiedArray[j].number < modifiedArray[min].number) {
+              min=j; 
+          }
+          }
+          await addTimeOut(250) 
+         }
+         if (min === i) {
+          modifiedArray[i].state = ElementStates.Modified;
+        } else {
+          swap(modifiedArray, min, i);
+          modifiedArray[i].state = ElementStates.Modified;
+        }
+        await addTimeOut(250)
+        setOutput([...modifiedArray])
+        console.log(modifiedArray)
+      }
+      setFlag(false)
+      modifiedArray = []
+    } 
   return (
     <SolutionLayout title="Сортировка массива">
       <form onSubmit={randomArr}>
         <div className={style.box}>
           <div className={style.inputBox}>
-            <RadioInput label="Выбор" name="radio" value="select" onSelect={() => {setSort("select")}}/>
-            <RadioInput label="Пузырёк" name="radio" extraClass={style.m} value="bubble" onSelect={() => {setSort("bubble")}} defaultChecked/>
+            <RadioInput label="Выбор" name="radio" value="select" onClick={() => {setSort("select"); setOutput([])}}/>
+            <RadioInput label="Пузырёк" name="radio" extraClass={style.m} value="bubble" onClick={() => {setSort("bubble"); setOutput([])}} defaultChecked/>
           </div>
           <div className={style.inputBox}>
-            <Button isLoader={flag} disabled={maxDisabled} sorting={Direction.Ascending} text="По возрастанию" type="button" style={{marginRight: 12}} onClick={() => {if(sort === 'bubble'){bubbleSort(output, 'max');setMaxDisabled(true);setMinDisabled(false)}}}/>
-            <Button isLoader={flag} disabled={minDisabled} sorting={Direction.Descending} text="По убыванию" type="button" onClick={() => {if(sort === 'bubble'){bubbleSort(output, 'min');setMinDisabled(true);setMaxDisabled(false)}}}/>
+            <Button isLoader={flag} disabled={maxDisabled || !output} sorting={Direction.Ascending} text="По возрастанию" type="button" style={{marginRight: 12}} onClick={() => {
+              if(sort === 'bubble'){
+                bubbleSort(output, 'max')
+                setMaxDisabled(true)
+                setMinDisabled(false)
+                }else if(sort === 'select'){
+                  selectSort(output,'max')
+                  setMaxDisabled(true)
+                  setMinDisabled(false)
+                }}}/>
+            <Button isLoader={flag} disabled={minDisabled || !output} sorting={Direction.Descending} text="По убыванию" type="button" onClick={() => {
+              if(sort === 'bubble'){
+                bubbleSort(output, 'min')
+                setMinDisabled(true)
+                setMaxDisabled(false)
+              } 
+              else if(sort === 'select'){
+                selectSort(output,'min')
+                setMinDisabled(true)
+                setMaxDisabled(false)
+              }}
+              }/>
           </div>
           <Button isLoader={newArrFlag || flag} text="Новый массив" type="submit"/>
         </div>
