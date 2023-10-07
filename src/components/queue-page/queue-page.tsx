@@ -9,7 +9,7 @@ import { Circle } from "../ui/circle/circle";
 import { ElementStates } from "../../types/element-states";
 import { addTimeOut } from "../../tools/tools";
 
-type TArr = TSwap | {number: undefined, state: undefined}
+export type TArr = TSwap | {number: undefined, state: undefined}
 
 export const QueuePage: React.FC = () => {
   const [index, setIndex] = useState<{tail: number, head: number | null}>({tail: 0, head: null})
@@ -72,7 +72,6 @@ export const QueuePage: React.FC = () => {
       }
   
     }
-    console.log(index.head)
     setFlag(false)
     setValues({input: ''})
     modifiedArray = []
