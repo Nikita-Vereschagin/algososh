@@ -1,4 +1,4 @@
-import React, { FormEventHandler, useState } from "react";
+import React, { FormEventHandler, useEffect, useState } from "react";
 import { SolutionLayout } from "../ui/solution-layout/solution-layout";
 import style from "./list-page.module.css"
 import { Button } from "../ui/button/button";
@@ -11,7 +11,8 @@ import { ElementStates } from "../../types/element-states";
 import { ArrowIcon } from "../ui/icons/arrow-icon";
 
 type TModArr = TArr & {
-  status: boolean
+  changingIndex: number | undefined,
+  place: 'head' | 'tail' | undefined
 }
 
 export const ListPage: React.FC = () => {
@@ -19,6 +20,22 @@ export const ListPage: React.FC = () => {
 
   const [flag, setFlag] = useState([false,false,false,false,false,false])
   const [output, setOutput] = useState<TModArr[]>([])
+
+  useEffect(() => {
+    let modifiedArray: TModArr[] = []
+    const arr = [...Array.from({
+      length: 4
+    }, () => Math.floor(Math.random() * 100))]
+    for (let i=0; i < arr.length; i++){
+      modifiedArray[i] = {
+        number: arr[i],
+        state: ElementStates.Default,
+        changingIndex: undefined,
+        place: undefined
+      } 
+    }
+    setOutput([...modifiedArray])
+  },[])
 
   const delEl = async(i: number | null, f: number) => {
     if (i === null){
@@ -30,22 +47,46 @@ export const ListPage: React.FC = () => {
     let modifiedArray: TModArr[] = output
 
     if (i === 0){
-      modifiedArray[i].number = undefined
+      const num = modifiedArray[i].number
+      modifiedArray[i] = {number: undefined, state: ElementStates.Modified, changingIndex: num, place: 'tail'}
       setOutput([...modifiedArray])
-  
+
       await addTimeOut(500)
-  
+
+      modifiedArray[i] = {number: undefined, state: ElementStates.Default, changingIndex: undefined, place: undefined}
       modifiedArray.shift()
       setOutput([...modifiedArray])
-    } else {
-      
-    modifiedArray[i].number = undefined
-    setOutput([...modifiedArray])
 
-    await addTimeOut(500)
+    }else if (i === output.length - 1){
+      const num = modifiedArray[i].number
+      modifiedArray[i] = {number: undefined, state: ElementStates.Modified, changingIndex: num, place: 'tail'}
+      setOutput([...modifiedArray])
 
-    modifiedArray = modifiedArray.slice(i,i+1)
-    setOutput([...modifiedArray])
+      await addTimeOut(500)
+
+      modifiedArray[i] = {number: undefined, state: ElementStates.Default, changingIndex: undefined, place: undefined}
+      modifiedArray.pop()
+      setOutput([...modifiedArray])
+
+    } else  {
+      for (let j=0; j <= i;j++){
+        let num = modifiedArray[j].number
+        modifiedArray[j] = {number: num, state: ElementStates.Changing, changingIndex: undefined, place: undefined}
+        setOutput([...modifiedArray])
+        await addTimeOut(500)
+        if (j===i){
+          const num = modifiedArray[i].number
+          modifiedArray[i] = {number: undefined, state: ElementStates.Modified, changingIndex: num, place: 'tail'}
+          setOutput([...modifiedArray])
+  
+          await addTimeOut(500)
+  
+          modifiedArray[i] = {number: undefined, state: ElementStates.Default, changingIndex: undefined, place: undefined}
+          modifiedArray.splice(i,1)
+          modifiedArray = [...modifiedArray.map((item) => item.state === ElementStates.Changing ? {...item, state: ElementStates.Default} : item)]
+          setOutput([...modifiedArray])
+        }
+      }
     }
 
 
@@ -71,12 +112,33 @@ export const ListPage: React.FC = () => {
     setFlag([...modFlag])
     let modifiedArray: TModArr[] = output
 
-    modifiedArray.splice(i, 0, {number: Number(values.input), state: ElementStates.Modified, status: true})
+    if (i !== output.length && i !== 0){
+      for (let j=0; j <= i;j++){
+        let num = modifiedArray[j].number
+        modifiedArray[j] = {number: num, state: ElementStates.Changing, changingIndex: undefined, place: undefined}
+        setOutput([...modifiedArray])
+        await addTimeOut(500)
+        if (j===i){
+          modifiedArray.splice(i, 0, {number: undefined, state: ElementStates.Modified, changingIndex: Number(values.input), place: 'head'})
+          setOutput([...modifiedArray])
+      
+          await addTimeOut(500)
+      
+          modifiedArray = [...modifiedArray.map((item) => item.state === ElementStates.Changing ? {...item, state: ElementStates.Default} : item)]
+          modifiedArray[i] = {number: Number(values.input), state: ElementStates.Default, changingIndex: undefined, place: undefined}
+          setOutput([...modifiedArray])
+        }
+      }
+    }else {
+
+    modifiedArray.splice(i, 0, {number: undefined, state: ElementStates.Modified, changingIndex: Number(values.input), place: 'head'})
     setOutput([...modifiedArray])
+
     await addTimeOut(500)
-    modifiedArray[i].state = ElementStates.Default
-    modifiedArray[i].status = false
+
+    modifiedArray[i] = {number: Number(values.input), state: ElementStates.Default, changingIndex: undefined, place: undefined}
     setOutput([...modifiedArray])
+  }
 
     modFlag[f] = false 
     setFlag([...modFlag])
@@ -93,7 +155,7 @@ export const ListPage: React.FC = () => {
       <form className={style.box}>
         <Input max={4} maxLength={4} isLimitText={true} name="input" type={typeof values.input} value={values.input} onChange={handleChange}/>
         <Button text="Добавить в head" isLoader={flag && flag[0]} onClick={()=>addEl(0, 0)}  type="button" disabled={isNaN(Number(values.input)) || values.input === ''}/>
-        <Button text="Добавить в tail" isLoader={flag && flag[1]} onClick={()=>addEl(output.length - 1, 1)} type="button" disabled={isNaN(Number(values.input)) || values.input === '' || output.length - 1 < 0}/>
+        <Button text="Добавить в tail" isLoader={flag && flag[1]} onClick={()=>addEl(output.length, 1)} type="button" disabled={isNaN(Number(values.input)) || values.input === '' || output.length - 1 < 0}/>
         <Button isLoader={flag && flag[2]} text="Удалить из head" type="button" disabled={!(output.length > 0)} onClick={()=>delEl(0, 2)}/>
         <Button isLoader={flag && flag[3]} text="Удалить из tail" type="button" disabled={!(output.length > 0)} onClick={()=>delEl(output.length - 1, 3)}/>
       </form>
@@ -109,19 +171,22 @@ export const ListPage: React.FC = () => {
             return null
           }else if (i !== output.length - 1){ 
           return <div className={style.arrowBox} key={i}>
-                  <div className={style.twoCircles}>
-                    {el.status ? <Circle isSmall={true} letter={el?.number?.toString()} extraClass={style.circleBottom} state={ElementStates.Changing}/> : null}
-                    <Circle letter={el?.number?.toString()} head={i === 0  ? "top" : ""} index={i} extraClass={style.margin}  state={el?.state}/>
-                  </div>
-                  <ArrowIcon/>
-                </div>
+            {el.changingIndex !== undefined ? 
+              <Circle letter={el?.number?.toString()} tail={el.place === 'tail' ? <Circle letter={el.changingIndex.toString()}state={ElementStates.Changing}/>: null} head={el.place === 'head' ? <Circle isSmall={true} letter={el.changingIndex.toString()}state={ElementStates.Changing}/> : null} index={i} extraClass={style.margin}  state={el?.state}/>
+            :
+              <Circle letter={el?.number?.toString()} head={i === 0  ? "top" : ""} index={i} extraClass={style.margin}  state={el?.state}/>
+            }
+              <ArrowIcon/>
+            </div>
           }
           else if (i === output.length - 1){
-            return  <div key={i} className={style.twoCircles}>
-                      {el.status ? <Circle isSmall={true} letter={el?.number?.toString()} extraClass={style.circleBottom} state={ElementStates.Changing}/> : null}
-                      <Circle letter={el?.number?.toString()} head={i === 0  ? "top" : ""} tail={"tail"} index={i} extraClass={style.margin} state={el?.state}/>
-                    </div>
-          }
+            if (el.changingIndex !== undefined) {
+              return <Circle key={i} letter={el?.number?.toString()} tail={el.place === 'tail' ? <Circle letter={el.changingIndex.toString()}state={ElementStates.Changing}/>: null} head={el.place === 'head' ? <Circle isSmall={true} letter={el.changingIndex.toString()}state={ElementStates.Changing}/> : null} index={i} extraClass={style.margin}  state={el?.state}/>
+            } else {
+              return <Circle key={i} letter={el?.number?.toString()} head={i === 0  ? "top" : ""} tail={"tail"} index={i} extraClass={style.margin} state={el?.state}/>
+            }
+
+            }
           }
           })}
       </div>
