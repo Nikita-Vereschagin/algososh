@@ -1,92 +1,84 @@
-import React, { FormEventHandler, useEffect, useState } from "react";
+import React, { FormEventHandler, useEffect, useMemo, useState } from "react";
 import { SolutionLayout } from "../ui/solution-layout/solution-layout";
 import { Button } from "../ui/button/button";
 import { Input } from "../ui/input/input";
 import style from "./queue-page.module.css"
 import { useForm } from "../../hooks/useForm";
-import { TSwap } from "../../types/types";
 import { Circle } from "../ui/circle/circle";
 import { ElementStates } from "../../types/element-states";
 import { addTimeOut } from "../../tools/tools";
-
-export type TArr = TSwap | {number: undefined | number, state: undefined | ElementStates}
+import { QueueLogic } from "./queue-logic";
 
 export const QueuePage: React.FC = () => {
-  const [index, setIndex] = useState<{tail: number, head: number | null}>({tail: 0, head: null})
-  const [canDel, setCanDel] = useState(true)
-  let size = 7
+  const [queue,] = useState(() => new QueueLogic(7));
   const { values, handleChange, setValues } = useForm({input: ''})
-  const [flag, setFlag] = useState(false)
-  const [output, setOutput] = useState<TArr[]>([...Array(size).fill({number: undefined, state: undefined})])
+  const [loader, setLoader] = useState<'enqueue' | 'dequeue' | 'clear'>()
+  const [selectedEl, setSelectedEl] = useState<number>()
 
-  const delEl = async() => {
-    setFlag(true)
-    let modifiedArray: TArr[] = output
-    if (index.head !== null){
-      if (modifiedArray[index.head+1].number === undefined){
-        modifiedArray[index.head] = {number: Number(values.input), state: ElementStates.Changing}
-        setOutput([...modifiedArray])
-        await addTimeOut(500)
-        modifiedArray[index.head] = {number: undefined, state: undefined}
-        setOutput([...modifiedArray])
-        setCanDel(true)
-      }else{
-        modifiedArray[index.head] = {number: Number(values.input), state: ElementStates.Changing}
-        setOutput([...modifiedArray])
-        await addTimeOut(500)
-        modifiedArray[index.head] = {number: undefined, state: undefined}
-        setIndex({...index, head: index.head + 1})
-        setOutput([...modifiedArray])
-      }
-    }
-
-
-    setFlag(false)
-    modifiedArray = []
+  const output = useMemo(() => {return queue.getArray()}, [queue.getArray(), loader])
+  const {head, tail} = useMemo(() => {return queue.getIndex()}, [queue.getIndex()])
+  const dequeue = async() => {
+    setLoader('dequeue')
+    setSelectedEl(head)
+    await addTimeOut(500)
+    queue.dequeue()
+    setSelectedEl(undefined)
+    setLoader(undefined)
+  }
+  const clear = async() => {
+    setLoader('clear')
+    queue.clear()
+    await addTimeOut(500)
+    setLoader(undefined)
   }
 
-  const submit: FormEventHandler = async(e) => {
+  const enqueue: FormEventHandler = async(e) => {
     e.preventDefault()
-    setFlag(true)
-    let modifiedArray: TArr[] = output
-    if (index.head === null){
-
-      setCanDel(false)
-      modifiedArray[index.tail] = {number: Number(values.input), state: ElementStates.Changing}
-      setOutput([...modifiedArray])
-      await addTimeOut(500)
-      modifiedArray[index.tail] = {number: Number(values.input), state: ElementStates.Default}
-      setIndex({head: 0, tail: index.tail+1})
-      setOutput([...modifiedArray])
-    }else{
-      if (index.tail < output.length){
-        setCanDel(false)
-        modifiedArray[index.tail] = {number: Number(values.input), state: ElementStates.Changing}
-        setOutput([...modifiedArray])
-        await addTimeOut(500)
-        modifiedArray[index.tail] = {number: Number(values.input), state: ElementStates.Default}
-        setIndex({...index, tail: index.tail+1})
-        setOutput([...modifiedArray])
-      } else{
-        setCanDel(true)
-      }
-  
-    }
-    setFlag(false)
+    setLoader('enqueue')
+    setSelectedEl(tail)
+    await addTimeOut(500)
+    queue.enqueue(values.input)
+    setSelectedEl(undefined)
+    setLoader(undefined)
     setValues({input: ''})
-    modifiedArray = []
   };
-
   return (
     <SolutionLayout title="Очередь">
-      <form className={style.box} onSubmit={submit}>
-        <Input disabled={index.tail === output.length} max={4} maxLength={4} isLimitText={true} name="input" type={typeof values.input} value={values.input} onChange={handleChange}/>
-        <Button text="Добавить" isLoader={flag} type="submit" disabled={isNaN(Number(values.input)) || values.input === ''}/>
-        <Button isLoader={flag} text="Удалить" type="button" disabled={canDel || index.tail === output.length} onClick={()=>delEl()}/>
-        <Button text="Очистить" disabled={canDel || index.tail === output.length} style={{marginLeft: 80}} type="button"  onClick={()=>{setOutput([...Array(size).fill({number: undefined, state: undefined})]);setIndex({tail: 0, head: 0});setCanDel(true)}}/>
-      </form>
+      <form className={style.box} onSubmit={enqueue}>
+      <Input max={4} 
+               maxLength={4} 
+               isLimitText={true} 
+               name="input" 
+               type='string' 
+               value={values.input} 
+               onChange={handleChange}
+               disabled={loader === 'enqueue' || loader === 'dequeue' || loader === 'clear'}/>
+        <Button text="Добавить" 
+                isLoader={loader === 'enqueue'} 
+                type="submit" 
+                disabled={values.input === '' || loader === 'dequeue' || loader === 'clear'}/>
+        <Button text="Удалить" 
+                isLoader={loader === 'dequeue'}
+                type="button" 
+                disabled={output[head] === '' || output[tail-1] === '' || loader === 'enqueue' || loader === 'clear'} 
+                onClick={()=>dequeue()}/>
+        <Button text="Очистить" 
+                isLoader={loader === 'clear'} 
+                type="button" 
+                disabled={output[head] === '' || output[tail-1] === '' || loader === 'enqueue' || loader === 'dequeue'} 
+                onClick={()=>{clear()}}
+                style={{marginLeft: 80}} />
+        </form>
       <div className={style.circles}>
-        {output && output?.map((el: TArr, i: number) => {return <Circle letter={el?.number?.toString()} tail={i + 1 === index.tail  && el.number ? "tail" : ""} head={i === index.head  ? "top" : ""} index={i} extraClass={style.margin} key={i} state={el?.state}/>})}
+        {output.map((el: string, i: number) => {
+          return <Circle letter={el} 
+                         tail={i + 1 === tail && output[tail-1] !== '' ? "tail" : ""} 
+                         head={i === head && output[head] !== '' ? "top" : ""} 
+                         index={i} 
+                         extraClass={style.margin} 
+                         key={i} 
+                         state={selectedEl === i ? ElementStates.Changing : ElementStates.Default}/>})
+                         }
       </div>
     </SolutionLayout>
   );
