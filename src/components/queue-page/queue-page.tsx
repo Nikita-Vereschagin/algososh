@@ -52,7 +52,7 @@ export const QueuePage: React.FC = () => {
                type='string' 
                value={values.input} 
                onChange={handleChange}
-               disabled={loader === 'enqueue' || loader === 'dequeue' || loader === 'clear'}/>
+               disabled={loader !== undefined}/>
         <Button text="Добавить" 
                 isLoader={loader === 'enqueue'} 
                 type="submit" 

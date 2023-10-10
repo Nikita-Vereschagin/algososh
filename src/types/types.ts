@@ -15,4 +15,10 @@ export type TQueue = {
     clear(): void;
     getArray(): string[];
     getIndex(): {head: number, tail: number}
-  }
+}
+
+export type TList = {
+    addHelper(i: number, el: string): void;
+    delHelper(i: number): void;
+    getArray(): string[];
+}

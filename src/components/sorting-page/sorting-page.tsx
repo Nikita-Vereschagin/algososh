@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { SolutionLayout } from "../ui/solution-layout/solution-layout";
 import { Button } from "../ui/button/button";
 import { RadioInput } from "../ui/radio-input/radio-input";
@@ -11,20 +11,16 @@ import { TSwap } from "../../types/types";
 
 export const SortingPage: React.FC = () => {
   
-  const [flag, setFlag] = useState(false)
-  const [newArrFlag, setNewArrFlag] = useState(false)
-  const [output, setOutput] = useState<TSwap[]>()
-  const [sort, setSort] = useState('bubble')
-  const [maxDisabled, setMaxDisabled] = useState(false)
-  const [minDisabled, setMinDisabled] = useState(false)
+  const [loader, setLoader] = useState<'increase' | 'decrease' | 'newArr'>()
+  const [sort, setSort] = useState<'bubble' | 'select'>('bubble')
+  const [output, setOutput] = useState<TSwap[]>([])
+  const [selectedEl, setSelectedEl] = useState<{i: undefined | number, j: undefined | number}>({i: undefined, j: undefined})
   
-  const randomArr = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault(); 
-    setNewArrFlag(true)
+  const randomArr = () => {
+    setLoader('newArr')
     let modifiedArray: TSwap[] = []
-    const length = Math.floor(Math.random() * 17) + 3
     const arr = [...Array.from({
-      length: length
+      length: Math.floor(Math.random() * 17) + 3
     }, () => Math.floor(Math.random() * 100))]
     for (let i=0; i < arr.length; i++){
       modifiedArray[i] = {
@@ -33,69 +29,76 @@ export const SortingPage: React.FC = () => {
       } 
     }
     setOutput([...modifiedArray])
-    setNewArrFlag(false)
-    setMaxDisabled(false)
-    setMinDisabled(false)
+    setLoader(undefined)
   }
 
+  useEffect(() => {
+    randomArr()
+  },[])
+
   const bubbleSort = async (arr: TSwap[] | undefined, type: string) => {
-    if (arr === undefined){
-      return
-    }
-    setFlag(true)
+    if (arr !== undefined){
     
     let modifiedArray: TSwap[] = arr
+    for (let i=0; i < arr.length; i++){
+      modifiedArray[i] = {
+        ...modifiedArray[i],
+        state: ElementStates.Default
+      } 
+    }
 
     for (let i = 0; i < modifiedArray.length; i++) {
       for (let j = 0; j < modifiedArray.length - i - 1; j++) {
+        setSelectedEl({i: j, j: j+1})
+        await addTimeOut(250)
         if (type === 'max'){
+          setLoader('increase')
           if (modifiedArray[j].number > modifiedArray[j + 1].number) {
-            await addTimeOut(250)
-            modifiedArray[j+1].state = ElementStates.Changing
-            modifiedArray[j].state = ElementStates.Changing 
-            setOutput([...modifiedArray])
-            await addTimeOut(250)
             swap(modifiedArray,j,j+1)
-            setOutput([...modifiedArray])
           }
         } else if (type === 'min'){
+          setLoader('decrease')
           if (modifiedArray[j].number < modifiedArray[j + 1].number) {
-            await addTimeOut(250)
-            modifiedArray[j+1].state = ElementStates.Changing
-            modifiedArray[j].state = ElementStates.Changing 
-            setOutput([...modifiedArray])
-            await addTimeOut(250)
             swap(modifiedArray,j,j+1)
-            setOutput([...modifiedArray])
           }
         }
-        modifiedArray[modifiedArray.length - 1 - i].state = ElementStates.Modified
         setOutput([...modifiedArray])
         await addTimeOut(500)
       }
+      modifiedArray[modifiedArray.length - 1 - i].state = ElementStates.Modified
+      setOutput([...modifiedArray])
+      await addTimeOut(500)
     }
-    setFlag(false)
+    setSelectedEl({i: undefined, j: undefined})
+    setLoader(undefined)
     modifiedArray = []
+  }
   }
 
   const selectSort = async(arr: TSwap[] | undefined, type: string) => { 
-    if (arr === undefined){
-      return
-    }
-    setFlag(true)
-    
+    if (arr !== undefined){
     let modifiedArray: TSwap[] = arr
+    for (let i=0; i < arr.length; i++){
+      modifiedArray[i] = {
+        ...modifiedArray[i],
+        state: ElementStates.Default
+      } 
+    }
       for(let i = 0; i < modifiedArray.length; i++) {
+        setSelectedEl({i: i, j: undefined})
         let min = i;
         await addTimeOut(250)
         for(let j = i+1; j < modifiedArray.length; j++){
+          setSelectedEl({i: i, j: j})
           if (type === 'max'){
+            setLoader('increase')
             if(modifiedArray[j].number > modifiedArray[min].number) {
-              min=j; 
+              min=j
             }
           } else if (type === 'min'){
+            setLoader('decrease')
             if(modifiedArray[j].number < modifiedArray[min].number) {
-              min=j; 
+              min=j
           }
           }
           await addTimeOut(250) 
@@ -108,47 +111,40 @@ export const SortingPage: React.FC = () => {
         }
         await addTimeOut(250)
         setOutput([...modifiedArray])
-        console.log(modifiedArray)
       }
-      setFlag(false)
+      setSelectedEl({i: undefined, j: undefined})
+      setLoader(undefined)
       modifiedArray = []
+    }
     } 
   return (
     <SolutionLayout title="Сортировка массива">
-      <form onSubmit={randomArr}>
+      <form>
         <div className={style.box}>
           <div className={style.inputBox}>
-            <RadioInput label="Выбор" name="radio" value="select" onClick={() => {setSort("select"); setOutput([])}}/>
-            <RadioInput label="Пузырёк" name="radio" extraClass={style.m} value="bubble" onClick={() => {setSort("bubble"); setOutput([])}} defaultChecked/>
+            <RadioInput label="Выбор" name="radio" value="select" onClick={() => {setSort('bubble')}}/>
+            <RadioInput label="Пузырёк" name="radio" extraClass={style.m} value="bubble" onClick={() => {setSort('select')}} defaultChecked/>
           </div>
           <div className={style.inputBox}>
-            <Button isLoader={flag} disabled={maxDisabled || !output} sorting={Direction.Ascending} text="По возрастанию" type="button" style={{marginRight: 12}} onClick={() => {
+            <Button isLoader={loader === 'increase'} disabled={loader === 'decrease' || loader === 'newArr' || !output} sorting={Direction.Ascending} text="По возрастанию" type="button" style={{marginRight: 12}} onClick={() => {
               if(sort === 'bubble'){
                 bubbleSort(output, 'max')
-                setMaxDisabled(true)
-                setMinDisabled(false)
                 }else if(sort === 'select'){
                   selectSort(output,'max')
-                  setMaxDisabled(true)
-                  setMinDisabled(false)
                 }}}/>
-            <Button isLoader={flag} disabled={minDisabled || !output} sorting={Direction.Descending} text="По убыванию" type="button" onClick={() => {
+            <Button isLoader={loader === 'decrease'} disabled={loader === 'increase' || loader === 'newArr' || !output} sorting={Direction.Descending} text="По убыванию" type="button" onClick={() => {
               if(sort === 'bubble'){
                 bubbleSort(output, 'min')
-                setMinDisabled(true)
-                setMaxDisabled(false)
               } 
               else if(sort === 'select'){
                 selectSort(output,'min')
-                setMinDisabled(true)
-                setMaxDisabled(false)
               }}
               }/>
           </div>
-          <Button isLoader={newArrFlag || flag} text="Новый массив" type="submit"/>
+          <Button isLoader={loader === 'newArr'} disabled={loader === 'increase' || loader === 'decrease'} text="Новый массив" type="button" onClick={() =>randomArr()}/>
         </div>
         <div className={style.columnBox}>
-          {output && output.map((el: TSwap ,i:number) => {return <Column state={el.state} index={el.number} key={i} extraClass={style.columnMargin}/>})}
+          {output && output.map((el: TSwap ,i:number) => {return <Column state={selectedEl.i === i || selectedEl.j === i ? ElementStates.Changing : el.state} index={el.number} key={i} extraClass={style.columnMargin}/>})}
         </div>
       </form>
     </SolutionLayout>

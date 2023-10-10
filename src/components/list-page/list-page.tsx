@@ -1,194 +1,173 @@
-import React, { FormEventHandler, useEffect, useState } from "react";
+import React, { FormEventHandler, useEffect, useMemo, useState } from "react";
 import { SolutionLayout } from "../ui/solution-layout/solution-layout";
 import style from "./list-page.module.css"
 import { Button } from "../ui/button/button";
 import { Input } from "../ui/input/input";
 import { useForm } from "../../hooks/useForm";
 import { Circle } from "../ui/circle/circle";
-import { TArr } from "../queue-page/queue-page";
 import { addTimeOut } from "../../tools/tools";
 import { ElementStates } from "../../types/element-states";
 import { ArrowIcon } from "../ui/icons/arrow-icon";
+import { ListLogic } from "./list-logic";
 
-type TModArr = TArr & {
-  changingIndex: number | undefined,
-  place: 'head' | 'tail' | undefined
-}
+type TLoader = 'delT' | 'addT' | 'delH' | 'addH' | 'delI' | 'addI'
 
 export const ListPage: React.FC = () => {
-  const { values, handleChange, setValues } = useForm({input: '', index: ''})
+  const [list,] = useState(() => new ListLogic());
+  const { values, handleChange, setValues } = useForm({ input: '', index: '' })
+  const [loader, setLoader] = useState<TLoader>()
+  const [selectedEl, setSelectedEl] = useState<{del: number | undefined, add: number | undefined, value: string | undefined}>({del: undefined, add: undefined,value: undefined})
+  const [index, setIndex] = useState<number>()
+  const output = useMemo(() => {return list.getArray()}, [list.getArray()])
 
-  const [flag, setFlag] = useState([false,false,false,false,false,false])
-  const [output, setOutput] = useState<TModArr[]>([])
-
-  useEffect(() => {
-    let modifiedArray: TModArr[] = []
-    const arr = [...Array.from({
-      length: 4
-    }, () => Math.floor(Math.random() * 100))]
-    for (let i=0; i < arr.length; i++){
-      modifiedArray[i] = {
-        number: arr[i],
-        state: ElementStates.Default,
-        changingIndex: undefined,
-        place: undefined
-      } 
-    }
-    setOutput([...modifiedArray])
-  },[])
-
-  const delEl = async(i: number | null, f: number) => {
-    if (i === null){
-      return
-    }
-    let modFlag = flag
-    modFlag[f] = true
-    setFlag([...modFlag])
-    let modifiedArray: TModArr[] = output
-
-    if (i === 0){
-      const num = modifiedArray[i].number
-      modifiedArray[i] = {number: undefined, state: ElementStates.Modified, changingIndex: num, place: 'tail'}
-      setOutput([...modifiedArray])
-
-      await addTimeOut(500)
-
-      modifiedArray[i] = {number: undefined, state: ElementStates.Default, changingIndex: undefined, place: undefined}
-      modifiedArray.shift()
-      setOutput([...modifiedArray])
-
-    }else if (i === output.length - 1){
-      const num = modifiedArray[i].number
-      modifiedArray[i] = {number: undefined, state: ElementStates.Modified, changingIndex: num, place: 'tail'}
-      setOutput([...modifiedArray])
-
-      await addTimeOut(500)
-
-      modifiedArray[i] = {number: undefined, state: ElementStates.Default, changingIndex: undefined, place: undefined}
-      modifiedArray.pop()
-      setOutput([...modifiedArray])
-
-    } else  {
-      for (let j=0; j <= i;j++){
-        let num = modifiedArray[j].number
-        modifiedArray[j] = {number: num, state: ElementStates.Changing, changingIndex: undefined, place: undefined}
-        setOutput([...modifiedArray])
+  const delHelper = async (i: number, f: TLoader) => {
+    setLoader(f)
+    if (i === output.length-1 || i === 0){
+        setSelectedEl({del: i, add: undefined, value: output[i]})
         await addTimeOut(500)
-        if (j===i){
-          const num = modifiedArray[i].number
-          modifiedArray[i] = {number: undefined, state: ElementStates.Modified, changingIndex: num, place: 'tail'}
-          setOutput([...modifiedArray])
-  
-          await addTimeOut(500)
-  
-          modifiedArray[i] = {number: undefined, state: ElementStates.Default, changingIndex: undefined, place: undefined}
-          modifiedArray.splice(i,1)
-          modifiedArray = [...modifiedArray.map((item) => item.state === ElementStates.Changing ? {...item, state: ElementStates.Default} : item)]
-          setOutput([...modifiedArray])
+        output[i] = ''
+        await addTimeOut(500)
+        list.delHelper(i)
+    }else{
+        for (let j=0; j <= i; j++){
+            setIndex(j)
+            await addTimeOut(500)
+            if (j===i){
+                setSelectedEl({del: i, add: undefined, value: output[i]})
+                await addTimeOut(500)
+                output[i] = ''
+                await addTimeOut(500)
+                list.delHelper(i)
+            }
         }
-      }
     }
-
-
-    modFlag[f] = false
-    setFlag([...modFlag])
-    modifiedArray = []
-    setValues({...values, index: ''})
+    setLoader(undefined)
+    setIndex(undefined)
+    setSelectedEl({del: undefined, add: undefined, value: undefined})
+    setValues({ input: '', index: '' })
   }
 
-  const indexSubmit = async(e: React.FormEvent<HTMLFormElement>, i: number | null) => {
-    e.preventDefault()
-    addHelper(i,4)
-    setValues({input: '', index: ''})
-  };
-
-  const addHelper = async(i: number | null, f: number) => {
-    if (i === null){
-      return
-    }
-    
-    let modFlag = flag
-    modFlag[f] = true
-    setFlag([...modFlag])
-    let modifiedArray: TModArr[] = output
-
-    if (i !== output.length && i !== 0){
-      for (let j=0; j <= i;j++){
-        let num = modifiedArray[j].number
-        modifiedArray[j] = {number: num, state: ElementStates.Changing, changingIndex: undefined, place: undefined}
-        setOutput([...modifiedArray])
+  const addHelper = async (i: number, f: TLoader) => {
+    setLoader(f)
+    if (i === output.length-1 || i === 0){
+        setSelectedEl({add: i, del: undefined, value: values.input})
         await addTimeOut(500)
-        if (j===i){
-          modifiedArray.splice(i, 0, {number: undefined, state: ElementStates.Modified, changingIndex: Number(values.input), place: 'head'})
-          setOutput([...modifiedArray])
-      
-          await addTimeOut(500)
-      
-          modifiedArray = [...modifiedArray.map((item) => item.state === ElementStates.Changing ? {...item, state: ElementStates.Default} : item)]
-          modifiedArray[i] = {number: Number(values.input), state: ElementStates.Default, changingIndex: undefined, place: undefined}
-          setOutput([...modifiedArray])
+        setSelectedEl({add: i, del: undefined, value: values.input})
+        await addTimeOut(500)
+        list.addHelper(i,values.input)
+    }else{
+        for (let j=0; j <= i; j++){
+            setIndex(j)
+            await addTimeOut(500)
+            if (j===i){
+                setSelectedEl({add: i, del: undefined, value: values.input})
+                await addTimeOut(500)
+                setSelectedEl({add: i, del: undefined, value: values.input})
+                await addTimeOut(500)
+                list.addHelper(i,values.input)
+            }
         }
-      }
-    }else {
-
-    modifiedArray.splice(i, 0, {number: undefined, state: ElementStates.Modified, changingIndex: Number(values.input), place: 'head'})
-    setOutput([...modifiedArray])
-
-    await addTimeOut(500)
-
-    modifiedArray[i] = {number: Number(values.input), state: ElementStates.Default, changingIndex: undefined, place: undefined}
-    setOutput([...modifiedArray])
+    }
+    setLoader(undefined)
+    setIndex(undefined)
+    setSelectedEl({add: undefined, del: undefined, value: undefined})
+    setValues({ input: '', index: '' })
   }
-
-    modFlag[f] = false 
-    setFlag([...modFlag])
-    modifiedArray = []
-  };
-
-  const addEl = async(i: number | null, f: number) => {
-    addHelper(i,f)
-    setValues({...values, input: ''})
-  };
 
   return (
     <SolutionLayout title="Связный список">
       <form className={style.box}>
-        <Input max={4} maxLength={4} isLimitText={true} name="input" type={typeof values.input} value={values.input} onChange={handleChange}/>
-        <Button text="Добавить в head" isLoader={flag && flag[0]} onClick={()=>addEl(0, 0)}  type="button" disabled={isNaN(Number(values.input)) || values.input === ''}/>
-        <Button text="Добавить в tail" isLoader={flag && flag[1]} onClick={()=>addEl(output.length, 1)} type="button" disabled={isNaN(Number(values.input)) || values.input === '' || output.length - 1 < 0}/>
-        <Button isLoader={flag && flag[2]} text="Удалить из head" type="button" disabled={!(output.length > 0)} onClick={()=>delEl(0, 2)}/>
-        <Button isLoader={flag && flag[3]} text="Удалить из tail" type="button" disabled={!(output.length > 0)} onClick={()=>delEl(output.length - 1, 3)}/>
+        <Input max={4} 
+               maxLength={4} 
+               isLimitText={true} 
+               name="input" 
+               type='string'
+               disabled={loader !== undefined} 
+               value={values.input} 
+               onChange={handleChange} />
+        <Button text="Добавить в head" 
+                isLoader={loader === 'addH'} 
+                onClick={() => addHelper(0,'addH')} 
+                type="button" 
+                disabled={values.input === '' || loader !== undefined} />
+        <Button text="Добавить в tail" 
+                isLoader={loader === 'addT'} 
+                onClick={() => addHelper(output.length-1, 'addT')} 
+                type="button" 
+                disabled={values.input === '' || loader !== undefined} />
+        <Button isLoader={loader === 'delH'} 
+                text="Удалить из head" 
+                type="button" 
+                disabled={output.length === 0 || loader !== undefined} 
+                onClick={() => delHelper(0, 'delH')} />
+        <Button isLoader={loader === 'delT'} 
+                text="Удалить из tail" 
+                type="button" 
+                disabled={output.length === 0 || loader !== undefined} 
+                onClick={() => delHelper(output.length-1, 'delT')} />
       </form>
-      <form className={style.secBox} onSubmit={(e) => indexSubmit(e, Number(values.index))}>
-        <Input max={output.length - 1 === -1 ? 0 : output.length - 1 } name="index" disabled={!(output.length > 0)} type='number' value={values.index} onChange={handleChange}/>
-        <Button text="Добавить по индексу" isLoader={flag && flag[4]} type="submit" disabled={values.index === '' || values.input === ''}/>
-        <Button isLoader={flag && flag[5]} text="Удалить по индексу" type="button" disabled={!(output.length > 0) || values.index === ''} onClick={()=>delEl(Number(values.index), 5)}/>
+      <form className={style.secBox}>
+        <Input max={output.length - 1 === -1 ? 0 : output.length - 1} 
+               name="index" 
+               disabled={loader !== undefined} 
+               type='number' 
+               value={values.index} 
+               onChange={handleChange} />
+        <Button text="Добавить по индексу" 
+                isLoader={loader === 'addI'} 
+                type="button" 
+                disabled={values.input === '' || values.index === '' || Number(values.index) > output.length|| loader !== undefined}
+                onClick={() => addHelper(Number(values.index), 'addI')} />
+        <Button isLoader={loader === 'delI'} 
+                text="Удалить по индексу" 
+                type="button" 
+                disabled={output.length === 0 || values.index === '' || Number(values.index) > output.length || loader !== undefined} 
+                onClick={() => delHelper(Number(values.index), 'delI')} />
       </form>
       <div className={style.circles}>
-        {output && output?.map((el: TModArr, i: number) => {
+        {output?.map((el: string, i: number) => {
           {
-          if (el.number === undefined && el.state === undefined){
-            return null
-          }else if (i !== output.length - 1){ 
-          return <div className={style.arrowBox} key={i}>
-            {el.changingIndex !== undefined ? 
-              <Circle letter={el?.number?.toString()} tail={el.place === 'tail' ? <Circle letter={el.changingIndex.toString()}state={ElementStates.Changing}/>: null} head={el.place === 'head' ? <Circle isSmall={true} letter={el.changingIndex.toString()}state={ElementStates.Changing}/> : null} index={i} extraClass={style.margin}  state={el?.state}/>
-            :
-              <Circle letter={el?.number?.toString()} head={i === 0  ? "top" : ""} index={i} extraClass={style.margin}  state={el?.state}/>
+            if (i !== output.length - 1) {
+              return <div className={style.arrowBox} key={i}>
+                <Circle letter={el} 
+                        tail={(selectedEl.del === i && selectedEl.value !== undefined) ? 
+                        <Circle letter={selectedEl.value} state={ElementStates.Changing} /> 
+                            : 
+                        i === output.length-1 ? 'tail' : null} 
+                        head={(selectedEl.add === i && selectedEl.value !== undefined)  ? 
+                        <Circle isSmall={true} letter={selectedEl.value} state={ElementStates.Changing} /> 
+                            : 
+                        i === 0  ? 'head' : null} 
+                        index={i} 
+                        extraClass={style.margin} 
+                        state={(index !== undefined && i <= index) ? 
+                        ElementStates.Changing : selectedEl.del === i || selectedEl.add === i ?
+                        ElementStates.Modified : ElementStates.Default} />
+                <ArrowIcon />
+              </div>
             }
-              <ArrowIcon/>
-            </div>
+            else if (i === output.length - 1) {
+                return <Circle key={i} 
+                               letter={el} 
+                               tail={(selectedEl.del === i && selectedEl.value !== undefined) ? 
+                                <Circle letter={selectedEl.value} 
+                                        state={ElementStates.Changing} /> 
+                                    : 
+                                    i === output.length-1 ? 'tail' : null} 
+                                head={(selectedEl.add === i && selectedEl.value !== undefined) ? 
+                                    <Circle isSmall={true} 
+                                    letter={selectedEl.value} 
+                                    state={ElementStates.Changing} /> 
+                                        : 
+                                    i === 0  ? 'head' : null} 
+                                    index={i} 
+                                    extraClass={style.margin} 
+                                    state={(index !== undefined && i <= index) ? 
+                                        ElementStates.Changing : selectedEl.del === i || selectedEl.add === i ?
+                                        ElementStates.Modified : ElementStates.Default} />
+            }
           }
-          else if (i === output.length - 1){
-            if (el.changingIndex !== undefined) {
-              return <Circle key={i} letter={el?.number?.toString()} tail={el.place === 'tail' ? <Circle letter={el.changingIndex.toString()}state={ElementStates.Changing}/>: null} head={el.place === 'head' ? <Circle isSmall={true} letter={el.changingIndex.toString()}state={ElementStates.Changing}/> : null} index={i} extraClass={style.margin}  state={el?.state}/>
-            } else {
-              return <Circle key={i} letter={el?.number?.toString()} head={i === 0  ? "top" : ""} tail={"tail"} index={i} extraClass={style.margin} state={el?.state}/>
-            }
-
-            }
-          }
-          })}
+        })}
       </div>
     </SolutionLayout>
   );

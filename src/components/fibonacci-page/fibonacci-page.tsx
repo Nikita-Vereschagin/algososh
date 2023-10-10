@@ -12,7 +12,7 @@ export const FibonacciPage: React.FC = () => {
   const [output, setOutput] = useState<string[]>()
 
   const fib = async(n: string) => {
-    //переводим строку в число
+
     let number = parseInt(n) +2
     let modifiedArray: string[] = []
     var val = [0, 1]; 
@@ -29,13 +29,13 @@ export const FibonacciPage: React.FC = () => {
       await addTimeOut(500)
       for (let i=2; i < number; i++){
         await addTimeOut(500)
-        //формула последовательности фибоначчи
+
         val[i] = val[i - 2] + val[i - 1];
         modifiedArray.push(val[i].toString())
         setOutput([...modifiedArray])
       }
     }
-    //возвращаем все сонстанты и флаги в исходное положение 
+
     setFlag(false)
     modifiedArray = []
     setValues({input: ''})
@@ -48,8 +48,8 @@ export const FibonacciPage: React.FC = () => {
   return (
     <SolutionLayout title="Последовательность Фибоначчи">
       <form className={style.box} onSubmit={submit}>
-        <Input max={21} maxLength={2} isLimitText={parseInt(values.input) > 20 ? true : false} name="input" type={typeof values.input} value={values.input} onChange={handleChange}/>
-        <Button isLoader={flag} text="Рассчитать" type="submit" disabled={parseInt(values.input) < 0 ||  parseInt(values.input) > 20? true : false}/>
+        <Input max={21} disabled={flag} maxLength={2} isLimitText={parseInt(values.input) > 20 ? true : false} name="input" type='number' value={values.input} onChange={handleChange}/>
+        <Button isLoader={flag} text="Рассчитать" type="submit" disabled={parseInt(values.input) < 0 || parseInt(values.input) > 20 || values.input === ''}/>
       </form>
       <div className={style.circles}>
         {output && output?.map((el: string, i: number) => {return <Circle letter={el} extraClass={style.margin} key={i} index={i}/>})}

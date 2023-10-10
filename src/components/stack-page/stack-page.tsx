@@ -57,7 +57,7 @@ export const StackPage: React.FC = () => {
                type='string' 
                value={values.input} 
                onChange={handleChange}
-               disabled={loader === 'push' || loader === 'pop' || loader === 'clear'}/>
+               disabled={loader !== undefined}/>
         <Button text="Добавить" 
                 isLoader={loader === 'push'} 
                 type="submit" 
