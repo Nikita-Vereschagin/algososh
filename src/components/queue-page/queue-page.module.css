@@ -1,0 +1,20 @@
+.box{
+    display: grid;
+    grid-template-columns: 1fr max-content max-content max-content;
+    max-width: 80%;
+    gap: 0 12px;
+    margin: auto;
+}
+.circles{
+    display: flex;
+    margin: auto;
+    max-width: 800px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 110px
+}
+.margin{
+    margin-bottom: 10px;
+    margin-right: 16px;
+}
+
