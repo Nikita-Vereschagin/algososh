@@ -49,12 +49,18 @@ export const ListPage: React.FC = () => {
 
   const addHelper = async (i: number, f: TLoader) => {
     setLoader(f)
-    if (i === output.length-1 || i === 0){
-        setSelectedEl({add: i, del: undefined, value: values.input})
+    if (i === output.length){
+        setSelectedEl({add: i-1, del: undefined, value: values.input})
         await addTimeOut(500)
-        setSelectedEl({add: i, del: undefined, value: values.input})
+        setSelectedEl({add: i-1, del: undefined, value: values.input})
         await addTimeOut(500)
         list.addHelper(i,values.input)
+    }else if (i === 0){
+      setSelectedEl({add: i, del: undefined, value: values.input})
+      await addTimeOut(500)
+      setSelectedEl({add: i, del: undefined, value: values.input})
+      await addTimeOut(500)
+      list.addHelper(i,values.input)
     }else{
         for (let j=0; j <= i; j++){
             setIndex(j)
@@ -92,7 +98,7 @@ export const ListPage: React.FC = () => {
                 disabled={values.input === '' || loader !== undefined} />
         <Button text="Добавить в tail" 
                 isLoader={loader === 'addT'} 
-                onClick={() => addHelper(output.length-1, 'addT')} 
+                onClick={() => addHelper(output.length, 'addT')} 
                 type="button" 
                 disabled={values.input === '' || loader !== undefined} />
         <Button isLoader={loader === 'delH'} 
@@ -131,7 +137,7 @@ export const ListPage: React.FC = () => {
               return <div className={style.arrowBox} key={i}>
                 <Circle letter={el} 
                         tail={(selectedEl.del === i && selectedEl.value !== undefined) ? 
-                        <Circle letter={selectedEl.value} state={ElementStates.Changing} /> 
+                        <Circle isSmall={true} letter={selectedEl.value} state={ElementStates.Changing} /> 
                             : 
                         i === output.length-1 ? 'tail' : null} 
                         head={(selectedEl.add === i && selectedEl.value !== undefined)  ? 
@@ -150,7 +156,7 @@ export const ListPage: React.FC = () => {
                 return <Circle key={i} 
                                letter={el} 
                                tail={(selectedEl.del === i && selectedEl.value !== undefined) ? 
-                                <Circle letter={selectedEl.value} 
+                                <Circle isSmall={true} letter={selectedEl.value} 
                                         state={ElementStates.Changing} /> 
                                     : 
                                     i === output.length-1 ? 'tail' : null} 

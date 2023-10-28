@@ -29,9 +29,10 @@ export const StackPage: React.FC = () => {
     }
   }
 
-  const clear = () => {
+  const clear = async() => {
     setLoader('clear')
     stack.clear()
+    await addTimeOut(500)
     setLoader(undefined)
   }
 
