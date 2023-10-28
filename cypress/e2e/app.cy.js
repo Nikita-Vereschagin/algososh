@@ -1,25 +1,25 @@
 import { appData } from "../tools/app-data";
-
+const {string, fibonacci, sorting, stack, queue, list} = appData
 describe('Роутинг:', function() {
   it('main', function() {
-    cy.visit(appData.url);
+    cy.visit('/');
   });
   it('string', function() {
-    cy.visit(appData.string);
+    cy.visit(string);
   });
   it('fibonacci', function() {
-    cy.visit(appData.fibonacci);
+    cy.visit(fibonacci);
   });
   it('sorting', function() {
-    cy.visit(appData.sorting);
+    cy.visit(sorting);
   });
   it('stack', function() {
-    cy.visit(appData.stack);
+    cy.visit(stack);
   });
   it('queue', function() {
-    cy.visit(appData.queue);
+    cy.visit(queue);
   });
   it('list', function() {
-    cy.visit(appData.list);
+    cy.visit(list);
   });
 }); 

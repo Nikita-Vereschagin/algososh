@@ -1,13 +1,14 @@
 import { appData } from "../tools/app-data";
 import { cypressState } from "../tools/cypress-constants";
-
+const {defaultState, changingState} = cypressState
 describe('"Связный список" работает', function () {
   beforeEach(() => {
-    cy.visit(appData.url);
-    cy.get('[data-test="list"]').click();
+    cy.visit(appData.list);
     cy.contains("Связный список");
     cy.get('[class^=input_input__]').first().as('inputValue');
     cy.get('[class^=input_input__]').last().as('inputIndex');
+    cy.get('[class^=circle_circle__]').as('circle');
+    cy.get('[class*=circle_circle__]').as('circleAll');
     cy.contains('Добавить в head').first().as('addH');
     cy.contains('Добавить в tail').first().as('addT');
     cy.contains('Удалить из head').first().as('delH');
@@ -25,20 +26,20 @@ describe('"Связный список" работает', function () {
       .get('@delI').should('be.disabled');
   });
   it('Начальный список', function () {
-    cy.get('[class*=circle_circle__]').each( (el) => {
-      cy.get(el).should("have.css", "border-color", cypressState.default).contains(/\S{1,4}/);
+    cy.get('@circleAll').each( (el) => {
+      cy.get(el).should("have.css", "border-color", defaultState).contains(/\S{1,4}/);
     });
   });
   it('AddH', function () {
     cy.get('@inputValue').should('be.empty').type('A');
     cy.get('@addH').click();
-    cy.get('[class*=circle_small__]')
+    cy.get('[class*=circle_small__]')//[class*=circle_small__] не выношу в константу, так как изначально [class*=circle_small__] не существует
       .first()
-      .should("have.css", "border-color", cypressState.changing)
+      .should("have.css", "border-color", changingState)
       .contains('A')
-    cy.get('[class*=circle_circle__]')
+    cy.get('@circleAll')
       .first()
-      .should("have.css", "border-color", cypressState.default)
+      .should("have.css", "border-color", defaultState)
       .contains('A')
       .parent()
       .parent()
@@ -49,11 +50,11 @@ describe('"Связный список" работает', function () {
     cy.get('@addT').click();
     cy.get('[class*=circle_small__]')
       .first()
-      .should("have.css", "border-color", cypressState.changing)
+      .should("have.css", "border-color", changingState)
       .contains('B')
-    cy.get('[class*=circle_circle__]')
+    cy.get('@circleAll')
       .last()
-      .should("have.css", "border-color", cypressState.default)
+      .should("have.css", "border-color", defaultState)
       .contains('B')
       .parent()
       .parent()
@@ -66,46 +67,46 @@ describe('"Связный список" работает', function () {
     for (let i = 0; i < 2; i++) {
       cy.get('[class*=circle_small__]')
         .first()
-        .should("have.css", "border-color", cypressState.changing)
+        .should("have.css", "border-color", changingState)
         .contains('C')
       cy.wait(500);
     };
-    cy.get('[class^=circle_circle__]')
+    cy.get('@circle')
       .eq(2)
-      .should("have.css", "border-color", cypressState.default)
+      .should("have.css", "border-color", defaultState)
       .contains('C');
   });
   it('delH', function () {
     cy.get('@delH').click();
-    cy.get('[class^=circle_circle__]').its('length').then( (size) => {
+    cy.get('@circle').its('length').then( (size) => {
       cy.get('[class*=circle_small__]')
         .first()
-        .should("have.css", "border-color", cypressState.changing);
-      cy.get('[class^=circle_circle__]').its('length').should('eq', size - 2);
+        .should("have.css", "border-color", changingState);
+      cy.get('@circle').its('length').should('eq', size - 2);
     });
   });
   it('delT', function () {
     cy.get('@delT').click();
-    cy.get('[class^=circle_circle__]').its('length').then( (size) => {
+    cy.get('@circle').its('length').then( (size) => {
       cy.get('[class*=circle_small__]')
         .first()
-        .should("have.css", "border-color", cypressState.changing);
-      cy.get('[class^=circle_circle__]').its('length').should('eq', size - 2);
+        .should("have.css", "border-color", changingState);
+      cy.get('@circle').its('length').should('eq', size - 2);
     });
   });
   it('delI', function () {
     cy.get('@inputIndex').should('be.empty').type(2);
     cy.get('@delI').click();
     for (let i = 0; i < 2; i++) {
-      cy.get('[class*=circle_circle__]')
+      cy.get('@circleAll')
         .eq(i)
-        .should("have.css", "border-color", cypressState.changing);
+        .should("have.css", "border-color", changingState);
     };
-    cy.get('[class^=circle_circle__]').its('length').then( (size) => {
+    cy.get('@circle').its('length').then( (size) => {
       cy.get('[class*=circle_small__]')
         .first()
-        .should("have.css", "border-color", cypressState.changing);
-      cy.get('[class^=circle_circle__]').its('length').should('eq', size - 1);
+        .should("have.css", "border-color", changingState);
+      cy.get('@circle').its('length').should('eq', size - 1);
     });
   });
 

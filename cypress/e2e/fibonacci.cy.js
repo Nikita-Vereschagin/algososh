@@ -2,8 +2,7 @@ import { appData } from "../tools/app-data";
 
 describe('"Последовательность Фибоначчи" работает.', function () {
   beforeEach(() => {
-    cy.visit(appData.url);
-    cy.get('[data-test="fibonacci"]').click();
+    cy.visit(appData.fibonacci);
     cy.contains("Последовательность Фибоначчи");
     cy.get('[class^=input_input__]').first().as('input');
     cy.contains('Рассчитать').first().as('button');

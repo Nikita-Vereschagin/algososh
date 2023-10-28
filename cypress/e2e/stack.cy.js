@@ -1,10 +1,11 @@
 import { appData } from "../tools/app-data";
 import { cypressState } from "../tools/cypress-constants";
 
+const {defaultState, changingState} = cypressState
+
 describe('"Стек" работает.', function () {
   beforeEach(() => {
-    cy.visit(appData.url);
-    cy.get('[data-test="stack"]').click();
+    cy.visit(appData.stack);
     cy.contains("Стек");
     cy.get('[class^=input_input__]').first().as('input');
     cy.contains('Добавить').first().as('add');
@@ -20,11 +21,11 @@ describe('"Стек" работает.', function () {
   it('Add работает корректно', function () {
     cy.get('@input').should('be.empty').type('A');
     cy.get('@add').click();
-    cy.get('[class^=circle_circle__]')
-      .should("have.css", "border-color", cypressState.changing)
+    cy.get('[class^=circle_circle__]')//[class^=circle_circle__] не выношу в константу, так как изначально [class^=circle_circle__] не существует
+      .should("have.css", "border-color", changingState)
       .contains('A')
     cy.get('[class^=circle_circle__]')
-      .should("have.css", "border-color", cypressState.default)
+      .should("have.css", "border-color", defaultState)
   });
   it('Del работает корректно', function () {
     if (cy.get('[class^=circle_circle__]').should("have.length", 0)) {

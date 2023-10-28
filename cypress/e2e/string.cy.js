@@ -1,10 +1,11 @@
-import { appData } from "../tools/app-data";
 import { cypressState } from "../tools/cypress-constants";
+import { appData } from "../tools/app-data";
+
+const {defaultState, changingState, modifiedState} = cypressState
 
 describe('"Cтрока" работает.', function () {
   beforeEach(() => {
-    cy.visit(appData.url);
-    cy.get('[data-test="recursion"]').click();
+    cy.visit(appData.string);
     cy.contains("Строка");
     cy.get('[class^=input_input__]').first().as('input');
     cy.contains('Развернуть').first().as('button');
@@ -13,9 +14,9 @@ describe('"Cтрока" работает.', function () {
     cy.get('@input').should('be.empty').get('@button').should('be.disabled');
   });
   it('Разворот строки работает корректно', function () {
-    const step1 = ['ABCD', [cypressState.changing, cypressState.default, cypressState.default, cypressState.changing]]
-    const step2 = ['DBCA', [cypressState.modified, cypressState.changing, cypressState.changing, cypressState.modified]]
-    const step3 = ['DCBA', [cypressState.modified, cypressState.modified, cypressState.modified, cypressState.modified]]
+    const step1 = ['ABCD', [changingState, defaultState, defaultState, changingState]]
+    const step2 = ['DBCA', [modifiedState, changingState, changingState, modifiedState]]
+    const step3 = ['DCBA', [modifiedState, modifiedState, modifiedState, modifiedState]]
     cy.get('@input').should('be.empty').type(step1[0]);
     cy.get('@button').click();
     cy.get('[class^=circle_circle__]').each((el, i) => {
