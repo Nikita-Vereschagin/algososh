@@ -1,14 +1,15 @@
 import { appData } from "../tools/app-data";
-import { cypressState } from "../tools/cypress-constants";
+import { cypressState, cypressClassName } from "../tools/cypress-constants";
 
 const {defaultState, changingState} = cypressState
+const {input, circle} = cypressClassName
 
 describe('"Очередь" работает.', function () {
   beforeEach(() => {
     cy.visit(appData.queue);
     cy.contains("Очередь");
-    cy.get('[class^=input_input__]').first().as('input');
-    cy.get('[class^=circle_circle__]').as('circle');
+    cy.get(`[${input}]`).first().as('input');
+    cy.get(`[${circle}]`).as('circle');
     cy.contains('Добавить').first().as('add');
     cy.contains('Удалить').first().as('del');
     cy.contains('Очистить').first().as('clear');

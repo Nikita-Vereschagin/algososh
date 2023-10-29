@@ -1,14 +1,17 @@
 import { appData } from "../tools/app-data";
-import { cypressState } from "../tools/cypress-constants";
+import { cypressState, cypressClassName } from "../tools/cypress-constants";
+
 const {defaultState, changingState} = cypressState
+const {input, circle, circleAll, smallCircle} = cypressClassName
+
 describe('"Связный список" работает', function () {
   beforeEach(() => {
     cy.visit(appData.list);
     cy.contains("Связный список");
-    cy.get('[class^=input_input__]').first().as('inputValue');
-    cy.get('[class^=input_input__]').last().as('inputIndex');
-    cy.get('[class^=circle_circle__]').as('circle');
-    cy.get('[class*=circle_circle__]').as('circleAll');
+    cy.get(`[${input}]`).first().as('inputValue');
+    cy.get(`[${input}]`).last().as('inputIndex');
+    cy.get(`[${circle}]`).as('circle');
+    cy.get(`[${circleAll}]`).as('circleAll');
     cy.contains('Добавить в head').first().as('addH');
     cy.contains('Добавить в tail').first().as('addT');
     cy.contains('Удалить из head').first().as('delH');
@@ -33,7 +36,7 @@ describe('"Связный список" работает', function () {
   it('AddH', function () {
     cy.get('@inputValue').should('be.empty').type('A');
     cy.get('@addH').click();
-    cy.get('[class*=circle_small__]')//[class*=circle_small__] не выношу в константу, так как изначально [class*=circle_small__] не существует
+    cy.get(`[${smallCircle}]`)
       .first()
       .should("have.css", "border-color", changingState)
       .contains('A')
@@ -48,7 +51,7 @@ describe('"Связный список" работает', function () {
   it('AddT', function () {
     cy.get('@inputValue').should('be.empty').type('B');
     cy.get('@addT').click();
-    cy.get('[class*=circle_small__]')
+    cy.get(`[${smallCircle}]`)
       .first()
       .should("have.css", "border-color", changingState)
       .contains('B')
@@ -65,7 +68,7 @@ describe('"Связный список" работает', function () {
     cy.get('@inputIndex').should('be.empty').type(2);
     cy.get('@addI').click();
     for (let i = 0; i < 2; i++) {
-      cy.get('[class*=circle_small__]')
+      cy.get(`[${smallCircle}]`)
         .first()
         .should("have.css", "border-color", changingState)
         .contains('C')
@@ -79,7 +82,7 @@ describe('"Связный список" работает', function () {
   it('delH', function () {
     cy.get('@delH').click();
     cy.get('@circle').its('length').then( (size) => {
-      cy.get('[class*=circle_small__]')
+      cy.get(`[${smallCircle}]`)
         .first()
         .should("have.css", "border-color", changingState);
       cy.get('@circle').its('length').should('eq', size - 2);
@@ -88,7 +91,7 @@ describe('"Связный список" работает', function () {
   it('delT', function () {
     cy.get('@delT').click();
     cy.get('@circle').its('length').then( (size) => {
-      cy.get('[class*=circle_small__]')
+      cy.get(`[${smallCircle}]`)
         .first()
         .should("have.css", "border-color", changingState);
       cy.get('@circle').its('length').should('eq', size - 2);
@@ -103,7 +106,7 @@ describe('"Связный список" работает', function () {
         .should("have.css", "border-color", changingState);
     };
     cy.get('@circle').its('length').then( (size) => {
-      cy.get('[class*=circle_small__]')
+      cy.get(`[${smallCircle}]`)
         .first()
         .should("have.css", "border-color", changingState);
       cy.get('@circle').its('length').should('eq', size - 1);
